@@ -24,9 +24,7 @@ use crate::{
     grpc_helper::GrpcHelper,
     metadata_storage::{
         query_engine::{run_query, StructuredDataRow},
-        ExtractedMetadata,
-        MetadataReaderTS,
-        MetadataStorageTS,
+        ExtractedMetadata, MetadataReaderTS, MetadataStorageTS,
     },
     vector_index::{ScoredText, VectorIndexManager},
 };
@@ -37,7 +35,6 @@ pub struct DataManager {
     metadata_reader: MetadataReaderTS,
     blob_storage: Arc<BlobStorage>,
     coordinator_client: Arc<CoordinatorClient>,
-    rt: tokio::runtime::Runtime,
 }
 
 impl fmt::Debug for DataManager {
@@ -47,25 +44,20 @@ impl fmt::Debug for DataManager {
 }
 
 impl DataManager {
-    pub async fn new(
+    pub fn new(
         vector_index_manager: Arc<VectorIndexManager>,
         metadata_index_manager: MetadataStorageTS,
         metadata_reader: MetadataReaderTS,
         blob_storage: Arc<BlobStorage>,
         coordinator_client: Arc<CoordinatorClient>,
-    ) -> Result<Self> {
-        let rt = tokio::runtime::Builder::new_multi_thread()
-            .worker_threads(4)
-            .enable_all()
-            .build()?;
-        Ok(Self {
+    ) -> Self {
+        DataManager {
             vector_index_manager,
             metadata_index_manager,
             metadata_reader,
             blob_storage,
             coordinator_client,
-            rt,
-        })
+        }
     }
 
     #[tracing::instrument]
@@ -609,15 +601,8 @@ impl DataManager {
         let metadata_reader = self.metadata_reader.clone();
         let namespace = namespace.to_string();
         let query = query.to_string();
-        let handle = self.rt.handle().clone();
-
         tokio::task::spawn_blocking(move || {
-            let namespace = namespace.to_string();
-            let query = query.to_string();
-
-            handle.block_on(async move {
-                let namespace = namespace.to_string();
-                let query = query.to_string();
+            futures::executor::block_on(async move {
                 run_query(query, metadata_reader, schemas, namespace).await
             })
         })

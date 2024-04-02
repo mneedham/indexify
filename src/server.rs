@@ -125,6 +125,7 @@ impl Server {
         let blob_storage = Arc::new(BlobStorage::new_with_config(
             self.config.blob_storage.clone(),
         ));
+
         let data_manager = Arc::new(
             DataManager::new(
                 vector_index_manager,
@@ -133,7 +134,6 @@ impl Server {
                 blob_storage.clone(),
                 coordinator_client.clone(),
             )
-            .await?,
         );
         let namespace_endpoint_state = NamespaceEndpointState {
             data_manager: data_manager.clone(),
