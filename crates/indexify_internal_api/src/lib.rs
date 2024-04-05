@@ -7,6 +7,7 @@ use std::{
 };
 
 use anyhow::{anyhow, Result};
+use derive_builder::Builder;
 use indexify_proto::indexify_coordinator::{self};
 use nanoid::nanoid;
 use serde::{Deserialize, Serialize};
@@ -14,6 +15,51 @@ use serde_with::{serde_as, BytesOrString};
 use smart_default::SmartDefault;
 use strum::{Display, EnumString};
 use utoipa::{schema, ToSchema};
+
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Builder)]
+#[builder(build_fn(skip))]
+pub struct ExtractionGraph {
+    pub id: String,
+    // Name of the extractor
+    pub name: String,
+    pub namespace: String,
+
+    // Root of the policy
+    pub root_policy: String,
+
+    // Child policies of the root policy
+    // Policy ID -> Set of child policy IDs
+    pub child_policies: HashMap<String, HashSet<String>>,
+}
+
+impl ExtractionGraphBuilder {
+    fn build(&self) -> Result<ExtractionGraph> {
+        let name = self.name.clone().ok_or(anyhow!("name can't be empty"))?;
+        let namespace = self
+            .namespace
+            .clone()
+            .ok_or(anyhow!("namespace can't be empty"))?;
+        let root_policy = self
+            .root_policy
+            .clone()
+            .ok_or(anyhow!("root policy can't be empty"))?;
+        let child_policies = self
+            .child_policies
+            .clone()
+            .ok_or(anyhow!("child policies can't be empty"))?;
+        let mut hasher = DefaultHasher::new();
+        self.namespace.hash(&mut hasher);
+        self.name.hash(&mut hasher);
+        let id = format!("{:x}", hasher.finish());
+        Ok(ExtractionGraph {
+            id,
+            name,
+            namespace,
+            root_policy,
+            child_policies,
+        })
+    }
+}
 
 #[derive(Debug, Clone, Serialize, PartialEq, Eq, Deserialize, Default)]
 pub struct Index {
