@@ -306,3 +306,159 @@ pub mod raft_metrics {
         }
     }
 }
+
+pub mod server {
+    use prometheus::{opts, IntCounter, Registry};
+
+    #[derive(Clone, Debug)]
+    pub struct Metrics {
+        pub registry: Registry,
+        pub node_content_uploads: IntCounter,
+        pub node_content_bytes_uploaded: IntCounter,
+        pub node_content_extracted: IntCounter,
+        pub node_content_bytes_extracted: IntCounter,
+    }
+
+    impl Metrics {
+        pub fn new() -> Metrics {
+            let registry = Registry::new();
+            let content_uploads = IntCounter::with_opts(opts!(
+                "node_content_uploads",
+                "Number of contents uploaded on this node"
+            ))
+            .unwrap();
+            registry
+                .register(Box::new(content_uploads.clone()))
+                .unwrap();
+
+            let content_bytes_uploaded = IntCounter::with_opts(opts!(
+                "node_content_bytes_uploaded",
+                "Number of content bytes uploaded on this node"
+            ))
+            .unwrap();
+            registry
+                .register(Box::new(content_bytes_uploaded.clone()))
+                .unwrap();
+
+            let content_extracted = IntCounter::with_opts(opts!(
+                "node_content_extracted",
+                "Number of contents extracted on this node"
+            ))
+            .unwrap();
+            registry
+                .register(Box::new(content_extracted.clone()))
+                .unwrap();
+
+            let content_bytes_extracted = IntCounter::with_opts(opts!(
+                "node_content_bytes_extracted",
+                "Number of content bytes extracted on this node"
+            ))
+            .unwrap();
+            registry
+                .register(Box::new(content_bytes_extracted.clone()))
+                .unwrap();
+
+            Metrics {
+                registry,
+                node_content_uploads: content_uploads,
+                node_content_bytes_uploaded: content_bytes_uploaded,
+                node_content_extracted: content_extracted,
+                node_content_bytes_extracted: content_bytes_extracted,
+            }
+        }
+    }
+}
+
+pub mod coordinator {
+    use prometheus::{opts, IntCounter, IntGauge, Registry};
+
+    #[derive(Clone, Debug)]
+    pub struct Metrics {
+        pub registry: Registry,
+        pub tasks_completed: IntCounter,
+        pub tasks_errored: IntCounter,
+        pub tasks_in_progress: IntGauge,
+        pub executors_online: IntGauge,
+        pub content_uploads: IntCounter,
+        pub content_bytes_uploaded: IntCounter,
+        pub content_extracted: IntCounter,
+        pub content_extracted_bytes: IntCounter,
+    }
+
+    impl Metrics {
+        pub fn new() -> Metrics {
+            let registry = Registry::new();
+            let tasks_completed =
+                IntCounter::with_opts(opts!("tasks_completed", "Number of tasks completed"))
+                    .unwrap();
+            registry
+                .register(Box::new(tasks_completed.clone()))
+                .unwrap();
+
+            let tasks_errored = IntCounter::with_opts(opts!(
+                "tasks_errored",
+                "Number of tasks completed with error"
+            ))
+            .unwrap();
+            registry.register(Box::new(tasks_errored.clone())).unwrap();
+
+            let tasks_in_progress =
+                IntGauge::with_opts(opts!("tasks_in_progress", "Number of tasks in progress"))
+                    .unwrap();
+            registry
+                .register(Box::new(tasks_in_progress.clone()))
+                .unwrap();
+
+            let executors_online =
+                IntGauge::with_opts(opts!("executors_online", "Number of executors running"))
+                    .unwrap();
+            registry
+                .register(Box::new(executors_online.clone()))
+                .unwrap();
+
+            let content_uploads =
+                IntCounter::with_opts(opts!("content_uploads", "Number of contents uploaded"))
+                    .unwrap();
+            registry
+                .register(Box::new(content_uploads.clone()))
+                .unwrap();
+
+            let content_bytes_uploaded = IntCounter::with_opts(opts!(
+                "content_bytes_uploaded",
+                "Number of content bytes uploaded"
+            ))
+            .unwrap();
+            registry
+                .register(Box::new(content_bytes_uploaded.clone()))
+                .unwrap();
+
+            let content_extracted =
+                IntCounter::with_opts(opts!("content_extracted", "Number of contents extracted"))
+                    .unwrap();
+            registry
+                .register(Box::new(content_extracted.clone()))
+                .unwrap();
+
+            let content_bytes_extracted = IntCounter::with_opts(opts!(
+                "content_bytes_extracted",
+                "Number of content bytes extracted"
+            ))
+            .unwrap();
+            registry
+                .register(Box::new(content_bytes_extracted.clone()))
+                .unwrap();
+
+            Metrics {
+                registry,
+                tasks_completed,
+                tasks_errored,
+                tasks_in_progress,
+                executors_online,
+                content_uploads,
+                content_bytes_uploaded,
+                content_extracted,
+                content_extracted_bytes: content_bytes_extracted,
+            }
+        }
+    }
+}
